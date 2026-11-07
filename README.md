@@ -47,7 +47,7 @@ Every gift comes from Channel3's catalog, through `lib/channel3.ts`:
 
 | Endpoint | What for |
 |---|---|
-| `POST /v1/search` | Text search per product type, filtered to in stock, new and under budget |
+| `POST /v1/search`, agentic mode | Searching from what someone loves, filtered to in stock, new and under budget |
 | `POST /v1/search` with an image | Finding things like the photo someone shared |
 | `POST /v1/lookup` | Reading a wishlist link someone pasted, and showing if it fits the budget |
 | `POST /v1/similar` | *More like this*, and finding alternatives when a wishlist item is over budget |

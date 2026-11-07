@@ -457,7 +457,7 @@ describe('totals', () => {
     const exchange = withHolds();
     exchange.holds.maya = { ...hold('maya'), status: 'CHARGED', charged: 24.95, released: 5.05 };
     exchange.holds.ben = { ...hold('ben'), status: 'RELEASED' };
-    expect(totals(exchange)).toEqual({ held: 180, charged: 24.95, released: 35.05 });
+    expect(totals(exchange)).toEqual({ held: 180, stillHeld: 120, charged: 24.95, released: 35.05 });
   });
 });
 
@@ -465,6 +465,12 @@ describe('the run without a model', () => {
   it('turns tastes into searches', () => {
     expect(searchesFromLikes('Mechanical keyboards, board games and hot sauce')).toEqual(['Mechanical keyboards', 'board games']);
     expect(searchesFromLikes('Trail running and very strong coffee')).toEqual(['Trail running', 'strong coffee']);
+  });
+
+  it('prefers three different brands, and fills up if it has to', () => {
+    const same = (id: string, rating: number) => product(id, 20, { brand: 'Fernwood', rating });
+    const found = bestThree([same('a', 5), same('b', 4.9), product('c', 20, { brand: 'Oak', rating: 3 }), same('d', 4.8)], 'nothing');
+    expect(found.map((item) => item.id)).toEqual(['a', 'c', 'b']);
   });
 
   it('leaves out what someone said to avoid', () => {
@@ -492,6 +498,16 @@ describe('the run without a model', () => {
     context.set({ ...current(), picks: { ...current().picks, [you]: { productId: current().ideas[you][0].product.id, by: 'giver' } } });
     await runScripted(context, step);
     expect(stageOf(current())).toBe('reveal');
+  });
+
+  it('puts what someone shared first', async () => {
+    const exchange = withHolds();
+    const people = exchange.people.map((person) => ({ ...person, wishlistUrl: person.id === 'jonas' ? 'https://shop.example/wish' : undefined, photoUrl: undefined }));
+    const { context, current } = contextFor({ ...exchange, people });
+    await runScripted(context, (_name, go) => Promise.resolve(go()) as never);
+    const slot = slotList(current()).find((candidate) => recipientOfSlot(current(), candidate)?.id === 'jonas')!;
+    expect(current().ideas[slot][0].product.id).toBe('near-1');
+    expect(current().ideas[slot][0].reason).toContain('wishlist');
   });
 
   it('waits for holds', async () => {

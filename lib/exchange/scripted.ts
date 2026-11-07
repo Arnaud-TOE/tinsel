@@ -16,11 +16,19 @@ export function searchesFromLikes(likes: string): string[] {
 
 const score = (product: Product) => (product.rating ?? 3.5) * Math.log10((product.reviews ?? 0) + 10);
 
-/** Three good ideas: the best rated, and not three from one search if there's a choice. */
+/** Three good ideas: the best rated, and not three from one brand if there's a choice. */
 export function bestThree(products: Product[], avoid: string): Product[] {
   const words = avoid.toLowerCase().split(/[^a-z]+/).filter((word) => word.length > 3);
   const allowed = products.filter((product) => !words.some((word) => product.title.toLowerCase().includes(word)));
-  return [...allowed].sort((a, b) => score(b) - score(a)).slice(0, 3);
+  const ranked = [...allowed].sort((a, b) => score(b) - score(a));
+  const brands = new Set<string>();
+  const distinct = ranked.filter((product) => {
+    const brand = product.brand ?? product.id;
+    if (brands.has(brand)) return false;
+    brands.add(brand);
+    return true;
+  });
+  return [...distinct, ...ranked.filter((product) => !distinct.includes(product))].slice(0, 3);
 }
 
 export type Step = (name: string, run: () => Promise<Outcome> | Outcome) => Promise<Outcome>;
@@ -43,11 +51,15 @@ export async function runScripted(context: ToolContext, step: Step): Promise<voi
         if (!recipient) return;
         if (recipient.wishlistUrl) await call('checkWishlist', { slot });
         if (recipient.photoUrl) await call('searchByPhoto', { slot });
-        for (const query of searchesFromLikes(recipient.likes)) await call('searchGifts', { slot, query });
-        const found = bestThree(current().candidates[slot] ?? [], recipient.avoid);
+        for (const liked of searchesFromLikes(recipient.likes)) await call('searchGifts', { slot, query: `gift for someone who loves ${liked.toLowerCase()}` });
+        const candidates = current().candidates[slot] ?? [];
+        const shared = recipient.wishlistUrl || recipient.photoUrl ? candidates[0] : undefined;
+        const others = bestThree(candidates.filter((product) => product !== shared), recipient.avoid);
+        const found = shared ? [shared, ...others].slice(0, 3) : others;
         if (found.length === 0) return;
         const liked = searchesFromLikes(recipient.likes).join(' and ').toLowerCase();
-        await call('proposeIdeas', { slot, ideas: found.map((product) => ({ productId: product.id, reason: `Well rated, and it fits a love of ${liked}.` })) });
+        const sharedReason = recipient.wishlistUrl ? "Close to what's on their wishlist, and under the budget." : 'It looks like the photo they shared.';
+        await call('proposeIdeas', { slot, ideas: found.map((product) => ({ productId: product.id, reason: product === shared ? sharedReason : `Well rated, and it fits a love of ${liked}.` })) });
       }),
   );
 

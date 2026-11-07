@@ -309,7 +309,7 @@ export const TOOLS: Record<string, Tool> = {
     run: drawTool,
   },
   searchGifts: {
-    description: 'Searches real products in stock, new, under the budget. Use one product type per search, like "ceramic matcha bowl" or "leather pen case", not "gift ideas for a tea lover".',
+    description: 'Searches real products in stock, new, under the budget. Say what you want in a few words, one kind of thing per search, like "ceramic matcha bowl" or "baking tools for a keen home baker".',
     status: 'Searching the shops',
     properties: {
       slot: { type: 'string', description: 'Which slot this is for' },

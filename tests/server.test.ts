@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assistantSays, cleanConversation, DEFAULT_MODEL, dropUnknownCalls, requestFor } from '@/lib/assistant';
-import { toProduct, type RawProduct } from '@/lib/channel3';
+import { toProduct, toProducts, type RawProduct } from '@/lib/channel3';
 import { decideCharge } from '@/lib/charge';
 import { TOOLS } from '@/lib/exchange/tools';
 import { CallLimiter, isSameOrigin } from '@/lib/guard';
@@ -42,6 +42,17 @@ describe('toProduct', () => {
     const product = toProduct(raw({ ratings: null, offers: [{ url: 'https://www.shop.example/p', price: { price: 9, currency: 'USD' }, availability: 'InStock', condition: null }] }));
     expect(product).toMatchObject({ merchant: 'www.shop.example', price: 9 });
     expect(product).not.toHaveProperty('rating');
+  });
+});
+
+describe('toProducts', () => {
+  it('keeps one of each, and leaves out what nobody can sell', () => {
+    const list = toProducts([raw(), raw({ id: 'variant' }), raw({ id: 'other', title: 'Another Dripper' }), raw({ id: 'none', title: 'Sold Out', offers: [] })]);
+    expect(list.map((product) => product.id)).toEqual(['abc', 'other']);
+  });
+
+  it('copes with no results', () => {
+    expect(toProducts(undefined)).toEqual([]);
   });
 });
 

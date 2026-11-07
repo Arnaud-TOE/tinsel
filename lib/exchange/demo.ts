@@ -47,7 +47,8 @@ export const DEMO_PEOPLE: Person[] = [
     team: 'Sales',
     likes: 'Commuting by bike and camping',
     avoid: 'Alcohol',
-    wishlistUrl: 'https://www.rei.com/product/122366',
+    // A $74.99 bike light: over the budget, so Tinsel has to find something like it for less.
+    wishlistUrl: 'https://buy.trychannel3.com/1A63RXn-pVz7-wFGVjP',
     letTinselPick: true,
   },
   {

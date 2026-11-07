@@ -297,6 +297,12 @@ export class ExchangeStore {
     return slotOfGiver(this.exchange, this.you().id);
   }
 
+  /** Everyone else has bought their gift, and the assistant can't choose yours unless you ask. */
+  onlyYourChoiceLeft() {
+    const yours = this.yourSlot();
+    return Boolean(yours) && slotList(this.exchange).every((slot) => slot === yours || this.exchange.bought[slot]) && Boolean(this.exchange.ideas[yours!]?.length);
+  }
+
   decider(slot: string) {
     return deciderOf(this.exchange, slot);
   }

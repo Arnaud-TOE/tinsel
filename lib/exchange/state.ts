@@ -54,7 +54,14 @@ export const deciderOf = (exchange: Exchange, slot: string): 'giver' | 'tinsel' 
   return giver?.letTinselPick ? 'tinsel' : 'giver';
 };
 
-export type Totals = { held: number; charged: number; released: number };
+export type Totals = {
+  /** Everything ever held. */
+  held: number;
+  /** What is still reserved right now. */
+  stillHeld: number;
+  charged: number;
+  released: number;
+};
 
 /** Money across the exchange, for the ledger and the reveal. */
 export function totals(exchange: Exchange): Totals {
@@ -62,6 +69,7 @@ export function totals(exchange: Exchange): Totals {
   const sum = (pick: (hold: (typeof holds)[number]) => number) => Math.round(holds.reduce((total, hold) => total + pick(hold), 0) * 100) / 100;
   return {
     held: sum((hold) => hold.held),
+    stillHeld: sum((hold) => (hold.status === 'HELD' ? hold.held : 0)),
     charged: sum((hold) => hold.charged ?? 0),
     released: sum((hold) => (hold.status === 'RELEASED' ? hold.held : (hold.released ?? 0))),
   };

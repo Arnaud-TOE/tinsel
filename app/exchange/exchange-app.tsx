@@ -48,7 +48,7 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
         <dl className="ml-auto flex items-center gap-5 text-sm">
           <Fact label="Budget" value={`$${exchange.budget} each`} />
           <Fact label="Gifts open" value={openingDay(exchange)} />
-          <Fact label="Held on PayPal" value={usd(money.held - money.charged - money.released)} />
+          <Fact label="Held on PayPal" value={usd(money.stillHeld)} />
           <Fact label="Charged" value={usd(money.charged)} />
           <Fact label="Released" value={usd(money.released)} tone="pine" />
         </dl>

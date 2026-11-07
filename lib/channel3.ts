@@ -56,7 +56,7 @@ export function toProduct(raw: RawProduct): Product | null {
   };
 }
 
-async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown, { timeoutMs = TIMEOUT_MS, attempts = 3 } = {}): Promise<T> {
   const key = process.env.CHANNEL3_API_KEY;
   if (!key) throw new Channel3Error(503, 'CHANNEL3_API_KEY is not set.');
   for (let attempt = 1; ; attempt++) {
@@ -64,11 +64,14 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
       method,
       headers: { 'x-api-key': key, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
+    }).catch((cause: Error) => {
+      if (cause.name === 'TimeoutError') throw new Channel3Error(504, `Channel3 took too long on ${path}.`);
+      throw cause;
     });
     if (response.ok) return (await response.json()) as T;
-    if ((response.status === 429 || response.status >= 500) && attempt < 3) {
+    if ((response.status === 429 || response.status >= 500) && attempt < attempts) {
       await new Promise((resolve) => setTimeout(resolve, attempt * 400));
       continue;
     }
@@ -86,31 +89,56 @@ const giftFilters = (maxPrice: number) => ({
 
 const US = { country: 'US', currency: 'USD' };
 
-const products = (list: RawProduct[] = []) => list.map(toProduct).filter((product): product is Product => product !== null);
+/** What can be bought, once each: a catalog often lists one product several times, as variants. */
+export function toProducts(list: RawProduct[] = []): Product[] {
+  const seen = new Set<string>();
+  return list
+    .map(toProduct)
+    .filter((product): product is Product => product !== null)
+    .filter((product) => {
+      const key = `${product.title.toLowerCase()}|${product.merchant}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
 
 export async function searchProducts(query: string, maxPrice: number): Promise<Product[]> {
-  const answer = await call<{ products: RawProduct[] }>('POST', '/v1/search', { query, limit: 12, filters: giftFilters(maxPrice), config: US });
-  return products(answer.products);
+  // Agentic search reads a request like a person would, which suits gifts better than matching words.
+  const answer = await call<{ products: RawProduct[] }>('POST', '/v1/search', { query, limit: 12, filters: giftFilters(maxPrice), config: { ...US, mode: 'agentic' } });
+  return toProducts(answer.products);
 }
 
 export async function searchByImage(image: { url: string } | { base64: string }, maxPrice: number): Promise<Product[]> {
   const source = 'url' in image ? { image_url: image.url } : { base64_image: image.base64 };
   const answer = await call<{ products: RawProduct[] }>('POST', '/v1/search', { ...source, limit: 12, filters: giftFilters(maxPrice), config: US });
-  return products(answer.products);
+  return toProducts(answer.products);
 }
 
 export async function similarProducts(productId: string, maxPrice: number): Promise<Product[]> {
   const answer = await call<{ products: RawProduct[] }>('POST', '/v1/similar', { product_id: productId, limit: 12, filters: giftFilters(maxPrice), config: US });
-  return products(answer.products);
+  return toProducts(answer.products);
 }
 
-/** Reads any product link. Null when it isn't a product, or nobody can sell it to you today. */
+const unreadable = (error: unknown) => error instanceof Channel3Error && [404, 422, 500, 504].includes(error.status);
+
+/**
+ * Reads any product link. A link the catalog knows comes back at once. Any other page has to be fetched
+ * live, which some shops block or draw out, so that gets one short try. Null when it isn't a product we
+ * can read, or nobody can sell it to you today.
+ */
 export async function lookupProduct(url: string): Promise<Product | null> {
   try {
-    const answer = await call<{ product: RawProduct }>('POST', '/v1/lookup', { url });
+    const answer = await call<{ product: RawProduct }>('POST', '/v1/lookup', { url, realtime_fetch: false });
     return toProduct(answer.product);
   } catch (error) {
-    if (error instanceof Channel3Error && (error.status === 404 || error.status === 422)) return null;
+    if (!unreadable(error)) throw error;
+  }
+  try {
+    const answer = await call<{ product: RawProduct }>('POST', '/v1/lookup', { url }, { timeoutMs: 12_000, attempts: 1 });
+    return toProduct(answer.product);
+  } catch (error) {
+    if (unreadable(error)) return null;
     throw error;
   }
 }
