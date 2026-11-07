@@ -213,7 +213,12 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  border-radius: 0.75rem;
   filter: drop-shadow(0 8px 10px rgba(23, 48, 31, 0.25));
+}
+
+.idea-card img {
+  mix-blend-mode: multiply;
 }
 
 .gift-open .gift-prize {
