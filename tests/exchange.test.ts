@@ -510,6 +510,16 @@ describe('the run without a model', () => {
     expect(current().ideas[slot][0].reason).toContain('wishlist');
   });
 
+  it("doesn't quote a wishlist it couldn't read", async () => {
+    const exchange = withHolds();
+    const people = exchange.people.map((person) => ({ ...person, wishlistUrl: person.id === 'jonas' ? 'https://shop.example/gone' : undefined, photoUrl: undefined }));
+    const { context, current } = contextFor({ ...exchange, people }, fakeShop({ lookup: vi.fn(async () => null) }));
+    await runScripted(context, (_name, go) => Promise.resolve(go()) as never);
+    const slot = slotList(current()).find((candidate) => recipientOfSlot(current(), candidate)?.id === 'jonas')!;
+    expect(current().ideas[slot].length).toBeGreaterThan(0);
+    expect(current().ideas[slot].map((idea) => idea.reason).join(' ')).not.toContain('wishlist');
+  });
+
   it('waits for holds', async () => {
     const { context, current } = contextFor(demoExchange());
     const step = (_name: string, go: () => unknown) => Promise.resolve(go()) as never;

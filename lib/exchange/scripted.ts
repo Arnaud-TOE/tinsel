@@ -49,16 +49,19 @@ export async function runScripted(context: ToolContext, step: Step): Promise<voi
         const recipientId = current().draw?.[giver];
         const recipient = current().people.find((person) => person.id === recipientId);
         if (!recipient) return;
-        if (recipient.wishlistUrl) await call('checkWishlist', { slot });
-        if (recipient.photoUrl) await call('searchByPhoto', { slot });
+        // What they shared only counts if it could be read: a broken link must not be quoted back as their wish.
+        const wishlist = recipient.wishlistUrl ? await call('checkWishlist', { slot }) : null;
+        const photo = recipient.photoUrl ? await call('searchByPhoto', { slot }) : null;
+        const wishlistRead = wishlist !== null && !wishlist.failed;
+        const photoRead = photo !== null && !photo.failed;
         for (const liked of searchesFromLikes(recipient.likes)) await call('searchGifts', { slot, query: `gift for someone who loves ${liked.toLowerCase()}` });
         const candidates = current().candidates[slot] ?? [];
-        const shared = recipient.wishlistUrl || recipient.photoUrl ? candidates[0] : undefined;
+        const shared = wishlistRead || photoRead ? candidates[0] : undefined;
         const others = bestThree(candidates.filter((product) => product !== shared), recipient.avoid);
         const found = shared ? [shared, ...others].slice(0, 3) : others;
         if (found.length === 0) return;
         const liked = searchesFromLikes(recipient.likes).join(' and ').toLowerCase();
-        const sharedReason = recipient.wishlistUrl ? "Close to what's on their wishlist, and under the budget." : 'It looks like the photo they shared.';
+        const sharedReason = wishlistRead ? "Close to what's on their wishlist, and under the budget." : 'It looks like the photo they shared.';
         await call('proposeIdeas', { slot, ideas: found.map((product) => ({ productId: product.id, reason: product === shared ? sharedReason : `Well rated, and it fits a love of ${liked}.` })) });
       }),
   );
