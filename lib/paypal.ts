@@ -25,6 +25,15 @@ function sdkClient(): Client {
     clientCredentialsAuthCredentials: { oAuthClientId: id, oAuthClientSecret: secret },
     environment: Environment.Sandbox,
     timeout: 20_000,
+    // The sandbox has bad moments. Every write below carries a PayPal-Request-Id, so sending one again is safe.
+    httpClientOptions: {
+      retryConfig: {
+        maxNumberOfRetries: 2,
+        maximumRetryWaitTime: 10,
+        httpStatusCodesToRetry: [429, 500, 502, 503, 504],
+        httpMethodsToRetry: ['GET', 'POST'],
+      },
+    },
   });
   return client;
 }
@@ -71,6 +80,7 @@ export async function createHoldOrder(personId: string, amount: number): Promise
         },
       },
     },
+    paypalRequestId: `tinsel-order-${personId}-${crypto.randomUUID()}`,
     prefer: 'return=minimal',
   });
   if (!result.id) throw new Error('PayPal returned no order id.');
@@ -146,7 +156,7 @@ export async function chargeHold(authorizationId: string, amount: number, note: 
 }
 
 export async function releaseHold(authorizationId: string): Promise<void> {
-  await payments().voidPayment({ authorizationId, prefer: 'return=minimal' });
+  await payments().voidPayment({ authorizationId, paypalRequestId: `tinsel-void-${authorizationId}`, prefer: 'return=minimal' });
 }
 
 /** Whether PayPal answers with these credentials, for the health check. */

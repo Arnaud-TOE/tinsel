@@ -3,6 +3,7 @@
 // authorizations that this object keeps track of.
 
 import type { HoldReceipt } from '@/lib/paypal';
+import { withRetries } from '@/lib/retry';
 import { demoExchange } from '@/lib/exchange/demo';
 import { runScripted } from '@/lib/exchange/scripted';
 import { activePeople, deciderOf, slotList, slotOfGiver, stageOf, totals } from '@/lib/exchange/state';
@@ -166,7 +167,8 @@ export class ExchangeStore {
         // One after another on screen, the way people would really turn up.
         await new Promise((resolve) => setTimeout(resolve, index * 350));
         try {
-          await this.placeTestCardHold(person);
+          // Nobody is there to click again for a colleague, so a bad moment at PayPal mustn't leave them waiting.
+          await withRetries(() => this.placeTestCardHold(person), 3, 1500);
         } catch (cause) {
           this.error = (cause as Error).message;
         } finally {

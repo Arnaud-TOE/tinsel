@@ -60,7 +60,16 @@ function HoldState({ store, exchange, person, placing, clientId }: { store: Exch
 
   if (!hold) {
     if (placing) return <p className="hold-placing text-sm text-[var(--muted)]">Placing {usd(budget)} hold…</p>;
-    if (!person.isYou) return <p className="text-sm text-[var(--muted)]">Waiting for their hold</p>;
+    if (!person.isYou) {
+      return (
+        <p className="text-sm text-[var(--muted)]">
+          Waiting for their hold.{' '}
+          <button type="button" className="underline hover:text-[var(--ink)]" onClick={() => void store.startColleagues()}>
+            Try again
+          </button>
+        </p>
+      );
+    }
     return (
       <div>
         <p className="text-sm font-medium">Your turn: hold {usd(budget)}. It&rsquo;s reserved, not charged.</p>
