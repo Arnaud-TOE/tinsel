@@ -1,0 +1,298 @@
+@import 'tailwindcss';
+
+:root {
+  --cream: #fbf7ef;
+  --ink: #17301f;
+  --muted: #5d6b60;
+  --line: #e8e1d3;
+  --line-strong: #cfc6b4;
+  --wash: #f4eee1;
+  --pine: #14532d;
+  --pine-dark: #0f3f22;
+  --berry: #b4232c;
+  --gold: #c08a1e;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.field {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  font-weight: 400;
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--pine);
+}
+
+/* ---------- where the exchange stands */
+
+.step {
+  color: var(--muted);
+}
+
+.step-mark {
+  background: var(--wash);
+}
+
+.step-now {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.step-now .step-mark {
+  background: var(--berry);
+  color: #fff;
+}
+
+.step-done .step-mark {
+  background: var(--pine);
+  color: #fff;
+}
+
+/* ---------- holds */
+
+.hold-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.hold-placing {
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+.money-bar {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pine) 22%, white);
+  overflow: hidden;
+}
+
+.money-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--pine);
+  transition: width 0.6s ease-out;
+}
+
+.status {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.status-held { background: #fbf0d3; color: #7c5a0c; }
+.status-charged { background: #dcefe2; color: var(--pine); }
+.status-released { background: var(--wash); color: var(--muted); }
+
+/* ---------- the assistant */
+
+.tool-line {
+  display: flex;
+  gap: 0.5rem;
+  padding-left: 0.25rem;
+  animation: rise 0.2s ease-out;
+}
+
+.tool-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.0625rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.tool-done .tool-mark { background: var(--pine); color: #fff; }
+.tool-failed .tool-mark { background: var(--berry); color: #fff; }
+.tool-running .tool-mark {
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--pine);
+  animation: spin 0.8s linear infinite;
+}
+
+.working-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--berry);
+  animation: breathe 1s ease-in-out infinite;
+}
+
+/* ---------- opening the gifts */
+
+.gift-box {
+  position: relative;
+  display: block;
+  width: 11rem;
+  height: 10rem;
+  margin: 0.75rem auto 0;
+  cursor: pointer;
+}
+
+.gift-box:disabled {
+  cursor: default;
+}
+
+.gift-body,
+.gift-lid {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(var(--ribbon), var(--ribbon)) center / 1.25rem 100% no-repeat,
+    linear-gradient(135deg, #fffdf8, #f2e9d6);
+  box-shadow: 0 8px 18px rgba(23, 48, 31, 0.14);
+}
+
+.gift-body {
+  bottom: 0;
+  width: 9rem;
+  height: 6.5rem;
+  z-index: 2;
+}
+
+.gift-lid {
+  bottom: 6rem;
+  width: 10rem;
+  height: 1.75rem;
+  z-index: 3;
+  transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.5s;
+}
+
+.gift-box:not(:disabled):hover .gift-lid {
+  transform: translateX(-50%) translateY(-0.25rem) rotate(-2deg);
+}
+
+.gift-open .gift-lid {
+  transform: translateX(-50%) translateY(-5rem) rotate(-24deg);
+  opacity: 0;
+}
+
+.gift-prize {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 8rem;
+  height: 8rem;
+  transform: translate(-50%, 0) scale(0.6);
+  opacity: 0;
+  transition: transform 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s, opacity 0.3s 0.15s;
+}
+
+.gift-prize img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(23, 48, 31, 0.25));
+}
+
+.gift-open .gift-prize {
+  z-index: 4;
+  transform: translate(-50%, -1.75rem) scale(1);
+  opacity: 1;
+}
+
+.gift-card {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 4rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: opacity 0.4s 0.5s, transform 0.4s 0.5s;
+}
+
+.gift-card-shown {
+  opacity: 1;
+  transform: none;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.confetti i {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 0.5rem;
+  height: 0.75rem;
+  border-radius: 1px;
+  background: var(--ribbon);
+  opacity: 0;
+  animation: pop 1.1s ease-out forwards;
+  animation-delay: calc(var(--i) * 12ms);
+  --angle: calc(var(--i) * 20deg);
+}
+
+.confetti i:nth-child(3n) { background: var(--gold); }
+.confetti i:nth-child(3n + 1) { background: var(--berry); }
+
+@keyframes pop {
+  0% { opacity: 1; transform: rotate(var(--angle)) translateY(0) rotate(0); }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateY(-7.5rem) rotate(240deg); }
+}
+
+@keyframes breathe {
+  50% { opacity: 0.45; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hold-placing,
+  .tool-line,
+  .tool-running .tool-mark,
+  .working-dot,
+  .confetti i {
+    animation: none;
+  }
+
+  .gift-lid,
+  .gift-prize,
+  .gift-card,
+  .money-bar i {
+    transition: none;
+  }
+}
