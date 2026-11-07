@@ -33,6 +33,11 @@ export function PersonCard({ store, exchange, person, placing, clientId }: { sto
 
       <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-[var(--ink)]">{person.likes}</p>
       <p className="mt-1 truncate text-xs text-[var(--muted)]">Not: {person.avoid}</p>
+      {(person.wishlistUrl || person.photoUrl) && (
+        <p className="mt-1 text-xs text-[var(--pine)]">
+          {[person.wishlistUrl && 'Shared a wishlist link', person.photoUrl && 'Shared a photo'].filter(Boolean).join(' · ')}
+        </p>
+      )}
 
       <div className="mt-3 min-h-14 border-t border-[var(--line)] pt-3">
         <HoldState store={store} exchange={exchange} person={person} placing={placing} clientId={clientId} />

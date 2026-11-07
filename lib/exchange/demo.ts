@@ -21,6 +21,8 @@ export const DEMO_PEOPLE: Person[] = [
     team: 'Design',
     likes: 'Handmade ceramics, matcha and houseplants',
     avoid: 'Anything with a slogan on it',
+    // A blue glazed bowl, from Channel3's image store.
+    photoUrl: 'https://cdn.trychannel3.com/3c6cd53b-dbce-4bda-8d86-ed714b864659?aid=01M6VEYDCYE9PXJD6CX38TX12Q&mid=0FQp',
     letTinselPick: true,
   },
   {
@@ -45,6 +47,7 @@ export const DEMO_PEOPLE: Person[] = [
     team: 'Sales',
     likes: 'Commuting by bike and camping',
     avoid: 'Alcohol',
+    wishlistUrl: 'https://www.rei.com/product/122366',
     letTinselPick: true,
   },
   {

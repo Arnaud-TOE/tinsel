@@ -83,7 +83,7 @@ export function AssistantPanel({ store, view, stage }: { store: ExchangeStore; v
       </div>
 
       <div className="border-t border-[var(--line)] p-3">
-        {modelDown && (
+        {modelDown && ['draw', 'ideas', 'picks', 'buy'].includes(stage) && (
           <button type="button" disabled={busy} onClick={() => void store.runWithoutModel()} className="mb-2 w-full rounded-lg bg-[var(--pine)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--pine-dark)] disabled:opacity-50">
             Run the exchange without the assistant
           </button>

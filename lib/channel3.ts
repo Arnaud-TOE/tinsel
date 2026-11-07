@@ -77,12 +77,11 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   }
 }
 
-// In stock, new and for grown-ups: what a colleague's present has to be, whatever the search says.
+// In stock, new and under budget: what a present has to be, whatever the search says.
 const giftFilters = (maxPrice: number) => ({
   price: { max_price: maxPrice },
   availability: ['InStock'],
   conditions: ['new'],
-  age: ['adult'],
 });
 
 const US = { country: 'US', currency: 'USD' };
