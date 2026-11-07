@@ -22,17 +22,19 @@ export function PersonCard({ store, exchange, person, placing, clientId }: { sto
           {initials}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold">
-            {person.name}
-            {person.isYou && <span className="ml-1.5 rounded-full bg-[var(--wash)] px-1.5 py-0.5 text-xs font-medium text-[var(--muted)]">you</span>}
+          <h3 className="flex items-center gap-1.5 font-semibold">
+            <span className="truncate">{person.name}</span>
+            {person.isYou && <span className="shrink-0 rounded-full bg-[var(--wash)] px-1.5 py-0.5 text-xs font-medium text-[var(--muted)]">you</span>}
           </h3>
           <p className="truncate text-xs text-[var(--muted)]">{person.team}</p>
         </div>
-        {person.isYou && !exchange.draw && <ProfileEditor store={store} person={person} budget={exchange.budget} />}
       </header>
 
       <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-[var(--ink)]">{person.likes}</p>
-      <p className="mt-1 truncate text-xs text-[var(--muted)]">Not: {person.avoid}</p>
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <p className="truncate text-xs text-[var(--muted)]">Not: {person.avoid}</p>
+        {person.isYou && !exchange.draw && <ProfileEditor store={store} person={person} budget={exchange.budget} />}
+      </div>
       {(person.wishlistUrl || person.photoUrl) && (
         <p className="mt-1 text-xs text-[var(--pine)]">
           {[person.wishlistUrl && 'Shared a wishlist link', person.photoUrl && 'Shared a photo'].filter(Boolean).join(' · ')}

@@ -43,7 +43,7 @@ export function AssistantPanel({ store, view, stage }: { store: ExchangeStore; v
   const suggestions = suggestionsFor(stage);
 
   return (
-    <aside className="assistant-panel flex h-96 shrink-0 flex-col border-t border-[var(--line)] bg-white lg:h-auto lg:w-[23rem] lg:border-l lg:border-t-0" aria-label="Tinsel, your assistant">
+    <aside className="assistant-panel flex h-[40dvh] shrink-0 flex-col border-t border-[var(--line)] bg-white lg:h-auto lg:w-[23rem] lg:border-l lg:border-t-0" aria-label="Tinsel, your assistant">
       <header className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3">
         <Logo className="size-5" />
         <h2 className="font-display text-lg font-semibold">Tinsel</h2>

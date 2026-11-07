@@ -44,7 +44,7 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
           <Logo className="size-6" />
           Tinsel
         </Link>
-        <span className="text-sm text-[var(--muted)]">{exchange.name}</span>
+        <span className="hidden whitespace-nowrap text-sm text-[var(--muted)] min-[1440px]:inline">{exchange.name}</span>
         <dl className="ml-auto flex items-center gap-5 text-sm">
           <Fact label="Budget" value={`$${exchange.budget} each`} />
           <Fact label="Gifts open" value={openingDay(exchange)} />
