@@ -77,10 +77,19 @@ export async function createHoldOrder(personId: string, amount: number): Promise
   return result.id;
 }
 
-/** Places the hold once the person has approved. */
+/**
+ * Places the hold once the person has approved. A slow answer can make the call go out twice, and the
+ * second one comes back refused even though the hold is in place, so that case reads the order instead.
+ */
 export async function authorizeHold(orderId: string): Promise<HoldReceipt> {
-  const { result } = await orders().authorizeOrder({ id: orderId, prefer: 'return=representation', body: {} });
-  return receiptFrom({ ...result, id: result.id ?? orderId });
+  try {
+    const { result } = await orders().authorizeOrder({ id: orderId, paypalRequestId: `tinsel-authorize-${orderId}`, prefer: 'return=representation', body: {} });
+    return receiptFrom({ ...result, id: result.id ?? orderId });
+  } catch (error) {
+    if (paypalIssue(error) !== 'ORDER_ALREADY_AUTHORIZED') throw error;
+    const { result } = await orders().getOrder({ id: orderId });
+    return receiptFrom({ ...result, id: result.id ?? orderId });
+  }
 }
 
 /**

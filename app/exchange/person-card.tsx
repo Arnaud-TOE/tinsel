@@ -63,6 +63,7 @@ function HoldState({ store, exchange, person, placing, clientId }: { store: Exch
       <div>
         <p className="text-sm font-medium">Your turn: hold {usd(budget)}. It&rsquo;s reserved, not charged.</p>
         <PayPalHoldButton store={store} clientId={clientId} />
+        <p className="mt-1 text-xs text-[var(--muted)]">PayPal&rsquo;s window will say &ldquo;Complete Purchase&rdquo;. It only places the hold.</p>
         <button type="button" className="mt-1.5 text-xs text-[var(--muted)] underline hover:text-[var(--ink)]" onClick={() => void store.holdYoursWithTestCard()}>
           Skip the sign-in: use a sandbox test card
         </button>
