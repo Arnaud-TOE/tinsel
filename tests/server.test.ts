@@ -112,8 +112,8 @@ describe('cleanConversation', () => {
 });
 
 describe('requestFor', () => {
-  it('asks for low reasoning, which costs about half as much per answer', () => {
-    expect(requestFor([{ role: 'user', content: 'Hi' }], DEFAULT_MODEL).reasoning_effort).toBe('low');
+  it('asks for no reasoning, the only setting gpt-5.4-mini takes with tools on Chat Completions', () => {
+    expect(requestFor([{ role: 'user', content: 'Hi' }], DEFAULT_MODEL).reasoning_effort).toBe('none');
   });
 
   it('fixes the instructions, the tools and the model on the server', () => {

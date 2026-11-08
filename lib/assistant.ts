@@ -7,8 +7,9 @@ export const DEFAULT_MODEL = 'gpt-5.4-mini';
 
 // Bound the cost of one call, whatever the browser sends.
 const MAX_COMPLETION_TOKENS = 4000;
-// Low reasoning costs about half as much per answer; the tools enforce the budget and the secrecy.
-const REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'low';
+// No reasoning: on Chat Completions, gpt-5.4-mini only takes function tools with reasoning_effort 'none'
+// (OpenAI refuses the call otherwise), and it is also the cheapest. The tools check every rule.
+const REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'none';
 const MAX_MESSAGES = 80;
 const MAX_CHARS = 200_000;
 
