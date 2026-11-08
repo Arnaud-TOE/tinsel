@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { HeroVideo } from '@/components/hero-video';
 
 const STEPS = [
   { title: 'Everyone holds their budget', text: 'Each person approves a hold on PayPal. The money is reserved, not charged, and nobody has to chase anybody.' },
@@ -55,7 +55,7 @@ export default function Home() {
             <p className="text-sm text-[var(--muted)]">PayPal sandbox: no real money moves, no parcel ships, and the team is fictional.</p>
           </div>
           <div className="mt-12 overflow-hidden rounded-2xl border border-[var(--line)] shadow-xl">
-            <Image src="/app.png" alt="An exchange in progress: a team of six with budgets held on PayPal, three real gift ideas with reasons, and the assistant's activity" width={2880} height={1620} priority className="h-auto w-full" />
+            <HeroVideo />
           </div>
         </section>
 
