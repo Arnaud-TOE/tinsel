@@ -1,5 +1,7 @@
 # Tinsel: the gift exchange that runs itself
 
+[![CI](https://github.com/Arnaud-TOE/tinsel/actions/workflows/ci.yml/badge.svg)](https://github.com/Arnaud-TOE/tinsel/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Around 2.5 million unwanted Secret Santa gifts go straight in the bin every year in the UK alone,**[^love2shop] and workmates are the top source of presents people throw away.[^hippo] Drawing names is solved. Nobody solved the rest: someone forgets, someone overspends, someone gets a mug they don't want, and the organizer spends December chasing people.
 
 Tinsel runs the whole thing. Everyone holds their budget on PayPal. An assistant draws the names, shops real stores for each person through Channel3, and buys the gift, charging the exact price to the giver's hold and releasing the rest.
@@ -110,6 +112,10 @@ CI (`.github/workflows/ci.yml`) runs all three on every push, and a pre-push hoo
 - The hold covers the product price. A live version would hold a little more for tax and shipping, and still charge only what the gift costs.
 - Someone can't drop out once their gift, or the gift for them, has been bought. That needs a refund flow.
 - The public demo limits the assistant, the searches and the holds per day. When a limit is reached, the app says so.
+
+## Credits
+
+Built from scratch during the hackathon: the first commit is from 7 November 2026. The libraries are listed in `package.json`; the product data comes from Channel3, and the payments from the PayPal sandbox.
 
 ## License
 
