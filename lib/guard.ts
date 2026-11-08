@@ -27,9 +27,10 @@ export class CallLimiter {
 
 const visitorOf = (request: Request) => request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
 
-// A full run takes several model calls, and one person may run it a few times.
-const modelPerVisitor = new CallLimiter(Number(process.env.AI_CALLS_PER_VISITOR) || 80, 10 * MINUTE);
-const modelPerDay = new CallLimiter(Number(process.env.AI_CALLS_PER_DAY) || 500, DAY);
+// The demo runs on a small prepaid budget. A full run and a few questions take about 35 model calls: a
+// visitor can do that in ten minutes, and the day allows about four. Without the model, the run still works.
+const modelPerVisitor = new CallLimiter(Number(process.env.AI_CALLS_PER_VISITOR) || 70, 10 * MINUTE);
+const modelPerDay = new CallLimiter(Number(process.env.AI_CALLS_PER_DAY) || 140, DAY);
 
 export function modelCallRefusal(request: Request): string | null {
   if (!modelPerVisitor.hit(visitorOf(request))) return 'This demo limits how much one visitor can ask me in ten minutes. Please try again in a few minutes.';

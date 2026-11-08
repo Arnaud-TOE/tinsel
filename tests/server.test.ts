@@ -112,6 +112,10 @@ describe('cleanConversation', () => {
 });
 
 describe('requestFor', () => {
+  it('asks for low reasoning, which costs about half as much per answer', () => {
+    expect(requestFor([{ role: 'user', content: 'Hi' }], DEFAULT_MODEL).reasoning_effort).toBe('low');
+  });
+
   it('fixes the instructions, the tools and the model on the server', () => {
     const request = requestFor([{ role: 'user', content: 'Hi' }], DEFAULT_MODEL);
     expect(request.model).toBe(DEFAULT_MODEL);

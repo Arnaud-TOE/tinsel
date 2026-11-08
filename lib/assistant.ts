@@ -7,6 +7,8 @@ export const DEFAULT_MODEL = 'gpt-5.4-mini';
 
 // Bound the cost of one call, whatever the browser sends.
 const MAX_COMPLETION_TOKENS = 4000;
+// Low reasoning costs about half as much per answer; the tools enforce the budget and the secrecy.
+const REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'low';
 const MAX_MESSAGES = 80;
 const MAX_CHARS = 200_000;
 
@@ -34,6 +36,7 @@ export const requestFor = (messages: ChatMessage[], model: string) => ({
   messages: [{ role: 'system', content: INSTRUCTIONS }, ...messages],
   tools: TOOL_SCHEMAS,
   max_completion_tokens: MAX_COMPLETION_TOKENS,
+  reasoning_effort: REASONING_EFFORT,
 });
 
 export const assistantSays = (content: string) => ({
