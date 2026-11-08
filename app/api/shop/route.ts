@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Channel3Error, lookupProduct, productSticker, searchByImage, searchProducts, similarProducts } from '@/lib/channel3';
-import { isSameOrigin, shopCallAllowed } from '@/lib/guard';
+import { isSameOrigin, shopCallRefusal } from '@/lib/guard';
 
 // Every Channel3 call the exchange makes, behind one route that holds the key.
 
@@ -21,7 +21,8 @@ const error = (status: number, message: string) => Response.json({ error: messag
 
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return error(403, 'This endpoint only serves the Tinsel app.');
-  if (!shopCallAllowed(request)) return error(429, 'That was a lot of searching for one visitor. Please try again in a few minutes.');
+  const refusal = shopCallRefusal(request);
+  if (refusal) return error(429, refusal);
 
   const parsed = shopRequest.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return error(400, 'That is not a search this app can run.');

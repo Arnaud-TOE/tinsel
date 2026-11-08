@@ -38,9 +38,16 @@ export function modelCallRefusal(request: Request): string | null {
   return null;
 }
 
+// Channel3 bills a credit per search, photo search, lookup, similar or sticker call, and a full run takes about
+// 25. The day's cap is far above what the judges need, and keeps a runaway tab or a script from spending the rest.
 const shopPerVisitor = new CallLimiter(Number(process.env.SHOP_CALLS_PER_VISITOR) || 150, 10 * MINUTE);
+const shopPerDay = new CallLimiter(Number(process.env.SHOP_CALLS_PER_DAY) || 1200, DAY);
 
-export const shopCallAllowed = (request: Request) => shopPerVisitor.hit(visitorOf(request));
+export function shopCallRefusal(request: Request): string | null {
+  if (!shopPerVisitor.hit(visitorOf(request))) return 'That was a lot of searching for one visitor. Please try again in a few minutes.';
+  if (!shopPerDay.hit('all')) return "The demo's shopping budget for today is used up. Please come back tomorrow.";
+  return null;
+}
 
 const holdsPerDay = new CallLimiter(Number(process.env.HOLDS_PER_DAY) || 600, DAY);
 
