@@ -16,9 +16,9 @@ export function PersonCard({ store, exchange, person, placing, clientId }: { sto
   const slot = slotOfGiver(exchange, person.id);
 
   return (
-    <article className={`person-card rounded-2xl border bg-white p-4 ${person.isYou ? 'border-[var(--pine)]' : 'border-[var(--line)]'} ${out ? 'opacity-60' : ''}`}>
+    <article className={`person-card rounded-2xl border bg-white p-4 ${person.isYou ? 'person-you border-[var(--pine)]' : 'border-[var(--line)]'} ${out ? 'opacity-60' : ''}`}>
       <header className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold text-white" style={{ background: AVATAR_COLORS[index % AVATAR_COLORS.length] }}>
+        <span className="grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold text-white shadow-md ring-2 ring-white" style={{ background: `linear-gradient(135deg, ${AVATAR_COLORS[index % AVATAR_COLORS.length]}cc, ${AVATAR_COLORS[index % AVATAR_COLORS.length]})` }}>
           {initials}
         </span>
         <div className="min-w-0 flex-1">

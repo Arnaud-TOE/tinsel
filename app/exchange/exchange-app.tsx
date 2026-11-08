@@ -38,14 +38,15 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
   const yourSlot = slotOfGiver(exchange, store.you().id);
 
   return (
-    <div className="flex h-dvh flex-col bg-[var(--cream)] text-[var(--ink)]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-b border-[var(--line)] bg-white px-4 py-2">
+    <div className="exchange-bg flex h-dvh flex-col text-[var(--ink)]">
+      <header className="relative z-10 flex min-h-14 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-b border-[var(--line)] bg-white/80 px-4 py-2 backdrop-blur-xl">
+        <span className="brand-strip" aria-hidden />
         <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
           <Logo className="size-6" />
           Tinsel
         </Link>
         <span className="hidden whitespace-nowrap text-sm text-[var(--muted)] min-[1440px]:inline">{exchange.name}</span>
-        <dl className="ml-auto flex items-center gap-5 text-sm">
+        <dl className="ml-auto flex items-center gap-2 text-sm">
           <Fact label="Budget" value={`$${exchange.budget} each`} />
           <Fact label="Gifts open" value={openingDay(exchange)} />
           <Fact label="Held on PayPal" value={usd(money.stillHeld)} />
@@ -158,7 +159,7 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
 
 function Fact({ label, value, tone }: { label: string; value: string; tone?: 'pine' }) {
   return (
-    <div className="hidden items-baseline gap-1.5 xl:flex">
+    <div className="hidden items-baseline gap-1.5 rounded-full border border-[var(--line)] bg-white/70 px-3 py-1 xl:flex">
       <dt className="text-[var(--muted)]">{label}</dt>
       <dd className={`font-semibold tabular-nums ${tone === 'pine' ? 'text-[var(--pine)]' : ''}`}>{value}</dd>
     </div>

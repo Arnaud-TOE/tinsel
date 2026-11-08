@@ -52,9 +52,16 @@ export function AssistantPanel({ store, view, stage }: { store: ExchangeStore; v
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3" aria-live="polite">
         {feed.length === 0 && (
-          <div className="py-6 text-center text-sm text-[var(--muted)]">
-            <p>I run your gift exchange from start to finish: the draw, the shopping and the buying.</p>
-            <p className="mt-2">I can&rsquo;t see who drew whom, and I can&rsquo;t spend more than PayPal is holding.</p>
+          <div className="py-8 text-center text-sm text-[var(--muted)]">
+            <span className="assistant-orb mx-auto grid size-16 place-items-center rounded-full" aria-hidden>
+              <Logo className="size-8" />
+            </span>
+            <p className="mt-5 font-display text-lg font-semibold text-[var(--ink)]">Your exchange, run for you</p>
+            <p className="mt-2">I run your gift exchange from start to finish: the draw, the shopping and the buying.</p>
+            <ul className="mx-auto mt-4 max-w-xs space-y-1.5 text-left text-xs">
+              <li className="flex gap-2 rounded-lg bg-[var(--wash)] px-3 py-2"><span aria-hidden>🔒</span>I can&rsquo;t see who drew whom.</li>
+              <li className="flex gap-2 rounded-lg bg-[var(--wash)] px-3 py-2"><span aria-hidden>💳</span>I can&rsquo;t spend more than PayPal is holding.</li>
+            </ul>
           </div>
         )}
         {feed.map((item) => {
