@@ -32,6 +32,13 @@ describe('toProduct', () => {
     expect(toProduct(raw({ images: [] }))?.image).toBeUndefined();
   });
 
+  it('leaves gift cards out: they say nothing about the person', () => {
+    for (const title of ['$25 Gift Card', 'AFTCO eGift Card', 'Spa gift certificate', 'Coffee E-Gift Cards']) {
+      expect(toProduct(raw({ title }))).toBeNull();
+    }
+    expect(toProduct(raw({ title: 'Gift set of matcha bowls' }))).not.toBeNull();
+  });
+
   it('drops a product nobody can sell', () => {
     expect(toProduct(raw({ offers: [] }))).toBeNull();
     expect(toProduct(raw({ offers: undefined }))).toBeNull();

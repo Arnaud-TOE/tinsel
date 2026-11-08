@@ -11,7 +11,7 @@ Built for the [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)
 
 | | |
 |---|---|
-| Live demo | _added at submission_ |
+| Live demo | [tinsel-nine.vercel.app](https://tinsel-nine.vercel.app) |
 | Demo video | _added at submission_ |
 | Sandbox buyer login | in the Devpost testing instructions |
 

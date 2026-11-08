@@ -40,7 +40,11 @@ function bestOffer(offers: RawOffer[] = []) {
     .sort((a, b) => a.price!.price! - b.price!.price!)[0];
 }
 
+// A gift card says nothing about the person, and searches for tastes still turn them up.
+const GIFT_CARD = /\b(e-?)?gift ?cards?\b|\bgift certificate\b/i;
+
 export function toProduct(raw: RawProduct): Product | null {
+  if (GIFT_CARD.test(raw.title)) return null;
   const offer = bestOffer(raw.offers);
   if (!offer) return null;
   const image = raw.images?.find((candidate) => candidate.is_main_image) ?? raw.images?.[0];
