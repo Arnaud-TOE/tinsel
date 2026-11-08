@@ -4,6 +4,7 @@
 
 import type { HoldReceipt } from '@/lib/paypal';
 import { withRetries } from '@/lib/retry';
+import { welcomeBack } from '@/lib/exchange/welcome';
 import { demoExchange } from '@/lib/exchange/demo';
 import { runScripted } from '@/lib/exchange/scripted';
 import { activePeople, deciderOf, slotList, slotOfGiver, stageOf, totals } from '@/lib/exchange/state';
@@ -31,7 +32,22 @@ export type View = {
   placing: string[];
   question: string | null;
   error: string | null;
+  /** Said once to someone back on a later day: where their exchange stands. */
+  welcome: string | null;
 };
+
+const LAST_VISIT_KEY = 'tinsel:lastVisit';
+
+/** Reads the day of the last visit, then records today's. */
+function lastVisitDay(today: string): string | null {
+  try {
+    const last = localStorage.getItem(LAST_VISIT_KEY);
+    localStorage.setItem(LAST_VISIT_KEY, today);
+    return last;
+  } catch {
+    return null;
+  }
+}
 
 async function post<T>(url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -78,6 +94,7 @@ export class ExchangeStore {
   private placing: string[] = [];
   private question: string | null = null;
   private error: string | null = null;
+  private welcome: string | null = null;
   private answerQuestion: ((yes: boolean) => void) | null = null;
   private listeners = new Set<() => void>();
   private nextId = 1;
@@ -86,6 +103,9 @@ export class ExchangeStore {
   constructor() {
     const saved = load();
     this.exchange = saved?.exchange ?? demoExchange();
+    const today = new Date().toISOString().slice(0, 10);
+    const last = lastVisitDay(today);
+    this.welcome = saved && last && last < today ? welcomeBack(this.exchange) : null;
     this.feed = saved?.feed ?? [];
     this.messages = saved?.messages ?? [];
     this.nextId = this.feed.reduce((highest, item) => Math.max(highest, item.id), 0) + 1;
@@ -102,7 +122,7 @@ export class ExchangeStore {
   getView = () => this.view;
 
   private buildView(): View {
-    return { exchange: this.exchange, feed: this.feed, busy: this.busy, modelDown: this.modelDown, placing: this.placing, question: this.question, error: this.error };
+    return { exchange: this.exchange, feed: this.feed, busy: this.busy, modelDown: this.modelDown, placing: this.placing, question: this.question, error: this.error, welcome: this.welcome };
   }
 
   private changed() {
@@ -134,6 +154,11 @@ export class ExchangeStore {
     this.answerQuestion?.(yes);
     this.answerQuestion = null;
     this.question = null;
+    this.changed();
+  }
+
+  dismissWelcome() {
+    this.welcome = null;
     this.changed();
   }
 

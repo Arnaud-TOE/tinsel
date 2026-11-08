@@ -81,6 +81,15 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
 
               {stage === 'cancelled' && <p className="mt-5 rounded-xl border border-[var(--line)] bg-white p-4 text-sm">This exchange is cancelled, and every hold still in place has been released on PayPal. Nobody was charged.</p>}
 
+              {view.welcome && (
+                <p className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--line)] bg-white p-3 text-sm">
+                  <span className="flex-1">{view.welcome}</span>
+                  <button type="button" className="font-semibold text-[var(--pine)] underline" onClick={() => store.dismissWelcome()}>
+                    OK
+                  </button>
+                </p>
+              )}
+
               {view.error && (
                 <p role="alert" className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
                   <span className="flex-1">{view.error}</span>
