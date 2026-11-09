@@ -14,7 +14,7 @@ Built for the [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)
 | | |
 |---|---|
 | Live demo | [tinsel-nine.vercel.app](https://tinsel-nine.vercel.app) |
-| Demo video | _added at submission_ |
+| Demo video | [Watch on YouTube](https://youtu.be/EZyXzW9CPjI) |
 | Sandbox buyer login | in the Devpost testing instructions |
 
 ![An exchange in progress: the team with budgets held on PayPal, three real gift ideas with reasons, and the assistant's activity](public/app.png)
