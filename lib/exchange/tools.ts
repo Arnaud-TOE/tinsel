@@ -35,6 +35,8 @@ export type Outcome = {
   failed?: boolean;
   /** One line for the activity feed. */
   note?: string;
+  /** A slip in the model's own bookkeeping: it reads the reply, and the feed shows nothing. */
+  quiet?: boolean;
 };
 
 type Args = Record<string, unknown>;
@@ -76,7 +78,7 @@ function slotOverview(exchange: Exchange, slot: string) {
 
 function checkSlot(exchange: Exchange, slot: unknown): string | Outcome {
   const id = String(slot ?? '');
-  if (!exchange.slots?.[id]) return refuse(`No slot "${id}". Call checkExchange for the slots.`);
+  if (!exchange.slots?.[id]) return { reply: `No slot "${id}". Call checkExchange for the slots.`, failed: true, quiet: true };
   return id;
 }
 
@@ -403,7 +405,7 @@ To run the exchange:
 5. For slots whose decider is "tinsel", call pickGift. Don't wait to be asked: those givers already said yes. Don't buy yet: until the gifts are bought, someone can still drop out.
 6. For slots whose decider is "giver", stop and tell the owner their ideas are ready.
 
-When the organizer says to buy the gifts, call buyGift for every slot that has a chosen gift and isn't bought yet.
+When the organizer says to buy the gifts, call checkExchange, then buyGift for every slot it lists that has a chosen gift and isn't bought yet. A number it skips belonged to someone who dropped out.
 
 Secrecy: you can't know who drew whom, and that is deliberate. You only see slots and tastes. If anyone asks who has whom, say so plainly. Never guess, and never put a name in a reason.
 

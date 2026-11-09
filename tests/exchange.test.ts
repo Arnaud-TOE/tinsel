@@ -366,6 +366,13 @@ describe('buyGift', () => {
     expect((await run('buyGift', { slot }, context)).failed).toBe(true);
   });
 
+  it('keeps a slot number that no longer exists between the model and itself', async () => {
+    const { context } = await withIdeas();
+    const outcome = await run('buyGift', { slot: 'slot-99' }, context);
+    expect(outcome).toMatchObject({ failed: true, quiet: true });
+    expect(outcome.note).toBeUndefined();
+  });
+
   it('leaves the hold alone when the purchase fails, so another idea can be tried', async () => {
     const shop = fakeShop({ buy: vi.fn(async () => { throw new Error('It sold out.'); }) });
     const { context, current } = await withIdeas(shop);

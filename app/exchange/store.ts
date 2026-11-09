@@ -179,6 +179,11 @@ export class ExchangeStore {
     this.changed();
   }
 
+  private dropFeed(id: number) {
+    this.feed = this.feed.filter((item) => item.id !== id);
+    this.changed();
+  }
+
   // ---------------- holds
 
   /** The demo's colleagues place their holds as soon as the page opens. Real sandbox authorizations. */
@@ -349,7 +354,8 @@ export class ExchangeStore {
     } catch (cause) {
       outcome = { reply: `That didn't work: ${(cause as Error).message}`, failed: true, note: (cause as Error).message };
     }
-    this.updateFeed(id, { state: outcome.failed ? 'failed' : 'done', note: outcome.note });
+    if (outcome.quiet) this.dropFeed(id);
+    else this.updateFeed(id, { state: outcome.failed ? 'failed' : 'done', note: outcome.note });
     return outcome;
   }
 
