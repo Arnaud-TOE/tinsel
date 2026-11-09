@@ -413,7 +413,7 @@ Money: you can only spend through buyGift, on a gift that has been chosen. Holds
 
 When someone drops out, call handleDropout with their name as "person", then search and propose again for the slots it names, and pick if their decider is "tinsel".
 
-Style: warm, brief and specific, always in English. Two or three short sentences at the end of a run, with the money. No lists of products: the screen shows them. Slots are your own bookkeeping: never mention a slot or its number to people. Say "one giver is choosing their own gift" instead.`;
+Style: warm, brief and specific, always in English. Two or three short sentences at the end of a run. Quote only amounts a tool gave you: never add them up yourself. No lists of products: the screen shows them. Slots are your own bookkeeping: never mention a slot or its number to people. Say "one giver is choosing their own gift" instead.`;
 
 /** The tool list in the shape the model expects. Kept on the server's side of the proxy too, so the browser can't add to it. */
 export const TOOL_SCHEMAS = Object.entries(TOOLS).map(([name, tool]) => ({
