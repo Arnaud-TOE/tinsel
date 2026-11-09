@@ -39,6 +39,8 @@ No sign-in. Open `/exchange`. Everything stays in your browser, and all money is
 | Giving it all back | **Payments v2** `voidPayment`, when someone drops out or the exchange is cancelled | `lib/paypal.ts`, `app/api/holds/release` |
 | Never charging twice | A `PayPal-Request-Id` per capture, so a retry returns the first result | `lib/paypal.ts` |
 
+**Fast to drive.** Ctrl K (⌘K on a Mac) opens a command palette on the exchange: what to ask Tinsel at this stage, holding your budget, the ledger, starting over.
+
 **The hold is a ceiling that PayPal enforces.** We tried: a $500 capture on a $3 hold comes back `422 MAX_CAPTURE_AMOUNT_EXCEEDED`. Neither the page nor the model can name an amount: the charge route takes the price from Channel3 at that moment and refuses a hold that can't cover it.
 
 The demo's colleagues aren't there to click, so their holds use PayPal's published sandbox test card. They are real authorizations, captured and voided like yours.
