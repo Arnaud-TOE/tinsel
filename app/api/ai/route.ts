@@ -1,4 +1,4 @@
-import { assistantSays, BUDGET_USED_UP, cleanConversation, DEFAULT_MODEL, dropUnknownCalls, requestFor } from '@/lib/assistant';
+import { assistantSays, BUDGET_USED_UP, cleanConversation, DEFAULT_MODEL, dropUnknownCalls, keepToEnglish, requestFor } from '@/lib/assistant';
 import { logUsage } from '@/lib/model-usage';
 import { isSameOrigin, modelCallRefusal } from '@/lib/guard';
 
@@ -38,5 +38,5 @@ export async function POST(request: Request) {
     return say("The model didn't answer that one. Please try again in a moment.");
   }
   logUsage(answer?.usage);
-  return Response.json(dropUnknownCalls(answer));
+  return Response.json(keepToEnglish(dropUnknownCalls(answer)));
 }

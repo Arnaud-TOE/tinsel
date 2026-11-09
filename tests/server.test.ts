@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assistantSays, cleanConversation, DEFAULT_MODEL, dropUnknownCalls, requestFor } from '@/lib/assistant';
+import { assistantSays, cleanConversation, DEFAULT_MODEL, dropUnknownCalls, keepToEnglish, requestFor } from '@/lib/assistant';
 import { toProduct, toProducts, type RawProduct } from '@/lib/channel3';
 import { decideCharge } from '@/lib/charge';
 import { TOOLS } from '@/lib/exchange/tools';
@@ -129,6 +129,18 @@ describe('requestFor', () => {
   it('tells the model to keep the draw secret', () => {
     const { content } = requestFor([], DEFAULT_MODEL).messages[0];
     expect(content).toContain("you can't know who drew whom");
+  });
+});
+
+describe('keepToEnglish', () => {
+  const said = (content: string | null) => keepToEnglish({ choices: [{ message: { content } }] }).choices[0].message.content;
+
+  it('takes out a word of another script and the space before it', () => {
+    expect(said('All set بالكامل.')).toBe('All set.');
+  });
+
+  it('leaves names with accents alone', () => {
+    expect(said('Lucía Romero, $30.00')).toBe('Lucía Romero, $30.00');
   });
 });
 
