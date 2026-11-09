@@ -239,9 +239,11 @@ async function buyGift(args: Args, { get, set, shop }: ToolContext): Promise<Out
 
 async function handleDropout(args: Args, { get, set, shop }: ToolContext): Promise<Outcome> {
   const exchange = get();
-  const wanted = String(args.person ?? '').trim().toLowerCase();
+  const given = args.person ?? args.name ?? Object.values(args).find((value) => typeof value === 'string');
+  if (typeof given !== 'string' || !given.trim()) return refuse('Say who is out: call this again with their name as "person".', 'Asking who is out');
+  const wanted = given.trim().toLowerCase();
   const person = activePeople(exchange).find((candidate) => candidate.name.toLowerCase() === wanted || candidate.name.toLowerCase().split(' ').includes(wanted));
-  if (!person) return refuse(`Nobody here is called "${args.person}".`);
+  if (!person) return refuse(`Nobody here is called "${given.trim()}".`);
   if (person.isYou) return refuse('Ask the organizer to confirm that themselves.');
   const hold = exchange.holds[person.id];
   if (hold?.status === 'CHARGED') return refuse(`${person.name} has already bought their gift, so they can't drop out now.`);
@@ -398,14 +400,16 @@ To run the exchange:
 2. Call drawNames.
 3. For every slot, in one go, make one to three shopping calls: searchGifts with one product type per search, plus checkWishlist or searchByPhoto when the profile mentions them. Stick to what they like, and stay away from what they said to avoid.
 4. Call proposeIdeas for every slot, with 3 ideas that really fit. Prefer well-rated products, and don't propose three of the same thing.
-5. For slots whose decider is "tinsel", call pickGift, then buyGift. Don't wait to be asked: those givers already said yes.
+5. For slots whose decider is "tinsel", call pickGift. Don't wait to be asked: those givers already said yes. Don't buy yet: until the gifts are bought, someone can still drop out.
 6. For slots whose decider is "giver", stop and tell the owner their ideas are ready.
+
+When the organizer says to buy the gifts, call buyGift for every slot that has a chosen gift and isn't bought yet.
 
 Secrecy: you can't know who drew whom, and that is deliberate. You only see slots and tastes. If anyone asks who has whom, say so plainly. Never guess, and never put a name in a reason.
 
 Money: you can only spend through buyGift, on a gift that has been chosen. Holds are ceilings set by PayPal, and you can't exceed them. If a purchase fails, the hold is untouched: choose another idea, or tell the owner.
 
-When someone drops out, call handleDropout, then search and propose again for the slots it names, and buy if their decider is "tinsel".
+When someone drops out, call handleDropout with their name as "person", then search and propose again for the slots it names, and pick if their decider is "tinsel".
 
 Style: warm, brief and specific, always in English. Two or three short sentences at the end of a run, with the money. No lists of products: the screen shows them. Slots are your own bookkeeping: never mention a slot or its number to people. Say "one giver is choosing their own gift" instead.`;
 

@@ -24,10 +24,10 @@ Built for the [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)
 No sign-in. Open `/exchange`. Everything stays in your browser, and all money is PayPal sandbox money.
 
 1. **Five colleagues place real sandbox holds** as the page opens. You're the sixth: approve yours in PayPal's window, or use the sandbox test card link to skip the sign-in.
-2. **Click _Run the exchange_.** The assistant draws names, searches real products for each person, proposes three ideas each and buys for those who asked it to. You'll see your own three ideas, and only yours.
-3. **Choose one.** Tinsel checks the price again and charges exactly that. Open the **PayPal ledger** to see held, charged and released amounts with PayPal's own IDs.
-4. **Try to break it.** Ask _Who drew me?_ It can't know. Say _Ben can't make it this year_: his hold is released and the draw repairs itself.
-5. **Open the gifts.**
+2. **Click _Run the exchange_.** The assistant draws names, searches real products for each person, proposes three ideas each and chooses for those who asked it to. You'll see your own three ideas, and only yours.
+3. **Try to break it.** Ask _Who drew me?_ It can't know. Say _Ben can't make it this year_: his hold is released and the draw repairs itself.
+4. **Choose one.** Tinsel checks the price again and charges exactly that. Open the **PayPal ledger** to see held, charged and released amounts with PayPal's own IDs.
+5. **Say _Buy the gifts_, then open them.**
 
 ## How we use PayPal
 

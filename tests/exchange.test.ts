@@ -527,3 +527,13 @@ describe('the run without a model', () => {
     expect(current().draw).toBeNull();
   });
 });
+
+describe('handleDropout without a name', () => {
+  it('asks for the name instead of reporting someone called undefined', async () => {
+    const { context } = await drawn();
+    const outcome = await run('handleDropout', {}, context);
+    expect(outcome.failed).toBe(true);
+    expect(outcome.reply).toContain('"person"');
+    expect(outcome.reply).not.toContain('undefined');
+  });
+});
