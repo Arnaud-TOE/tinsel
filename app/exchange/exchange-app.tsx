@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { CommandButton, CommandPalette, type Command } from '@/components/command-palette';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Logo } from '@/components/logo';
 import { openingDay, slotOfGiver, stageOf, totals } from '@/lib/exchange/state';
 import type { Stage } from '@/lib/exchange/types';
-import { AssistantPanel } from './assistant-panel';
+import { AssistantPanel, suggestionsFor } from './assistant-panel';
 import { Ledger } from './ledger';
 import { PersonCard } from './person-card';
 import { RevealRoom } from './reveal-room';
@@ -36,33 +38,71 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
   }, [store]);
 
   const yourSlot = slotOfGiver(exchange, store.you().id);
+  const router = useRouter();
+
+  // The command palette (Ctrl K): ask Tinsel, act on the exchange, or leave.
+  const ask = (prompt: string) => {
+    if (!view.busy) void store.ask(prompt);
+  };
+  const asks = [...new Set([...suggestionsFor(stage), ...(exchange.draw ? ['Who drew me?'] : []), 'Who are we waiting for?'])];
+  const youHold = Boolean(exchange.holds[store.you().id]);
+  const commands: Command[] = [
+    ...asks.map((prompt, index) => ({
+      id: `ask-${prompt}`,
+      group: 'Ask Tinsel',
+      label: prompt,
+      hint: index < suggestionsFor(stage).length ? 'Suggested' : 'AI',
+      icon: '✦',
+      run: () => ask(prompt),
+    })),
+    ...(stage === 'holds' && !youHold
+      ? [{ id: 'hold', group: 'The exchange', label: `Hold my $${exchange.budget} with the sandbox test card`, icon: '$', keywords: 'paypal budget card', run: () => void store.holdYoursWithTestCard() }]
+      : []),
+    ...(stage === 'reveal' ? [{ id: 'reveal', group: 'The exchange', label: 'Open the gifts', icon: '🎁', run: () => void store.reveal() }] : []),
+    {
+      id: 'ledger',
+      group: 'The exchange',
+      label: 'Show the PayPal ledger',
+      icon: '≡',
+      keywords: 'holds charges captures voids paypal ids',
+      run: () => {
+        const ledger = document.querySelector('section[aria-label="PayPal ledger"]');
+        const toggle = ledger?.querySelector<HTMLButtonElement>('button[aria-expanded="false"]');
+        toggle?.click();
+        ledger?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+    },
+    { id: 'start-over', group: 'The exchange', label: 'Start over', icon: '↺', keywords: 'reset release holds', run: () => void store.startOver() },
+    { id: 'home', group: 'Go to', label: 'Front page', icon: '⌂', run: () => router.push('/') },
+  ];
 
   return (
-    <div className="exchange-bg flex h-dvh flex-col text-[var(--ink)]">
-      <header className="relative z-10 flex min-h-14 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-b border-[var(--line)] bg-white/80 px-4 py-2 backdrop-blur-xl">
+    <div className="app-frame flex h-dvh flex-col text-[var(--ink)]">
+      <header className="relative z-10 flex min-h-14 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-white">
         <span className="brand-strip" aria-hidden />
         <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
-          <Logo className="size-6" />
+          <Logo className="size-6 drop-shadow-[0_0_12px_rgb(224_50_61_/_0.5)]" />
           Tinsel
         </Link>
-        <span className="hidden whitespace-nowrap text-sm text-[var(--muted)] min-[1440px]:inline">{exchange.name}</span>
-        <dl className="ml-auto flex items-center gap-2 text-sm">
+        <span className="hidden whitespace-nowrap text-sm text-white/50 min-[1680px]:inline">{exchange.name}</span>
+        <CommandButton label="Ask or act" className="hidden md:inline-flex" />
+        <dl className="ml-auto flex items-center gap-1.5 text-sm">
           <Fact label="Budget" value={`$${exchange.budget} each`} />
           <Fact label="Gifts open" value={openingDay(exchange)} />
           <Fact label="Held on PayPal" value={usd(money.stillHeld)} />
           <Fact label="Charged" value={usd(money.charged)} />
           <Fact label="Released" value={usd(money.released)} tone="pine" />
         </dl>
-        <span className="rounded-full border border-[var(--line)] px-2.5 py-1 text-xs text-[var(--muted)]" title="Every hold and charge here runs on the PayPal sandbox. No real money moves, and no parcel ships.">
+        <span className="live-pill" title="Every hold and charge here runs on the PayPal sandbox. No real money moves, and no parcel ships.">
           PayPal sandbox
         </span>
-        <button type="button" onClick={() => void store.startOver()} className="rounded-md px-2 py-1 text-sm text-[var(--muted)] hover:bg-[var(--wash)] hover:text-[var(--ink)]">
+        <button type="button" onClick={() => void store.startOver()} className="rounded-md px-2 py-1 text-sm text-white/60 hover:bg-white/10 hover:text-white">
           Start over
         </button>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <main className="min-h-0 flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 px-2 pb-2 lg:flex-row">
+        <main className="app-panel exchange-bg min-h-0 flex-1 overflow-y-auto">
           {exchange.revealed ? (
             <RevealRoom exchange={exchange} />
           ) : (
@@ -134,6 +174,7 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
 
         <AssistantPanel store={store} view={view} stage={stage} />
       </div>
+      <CommandPalette commands={commands} placeholder="Ask Tinsel, or act on the exchange…" />
 
       {view.question && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-labelledby="question-title">
@@ -159,9 +200,9 @@ export default function ExchangeApp({ clientId }: { clientId: string }) {
 
 function Fact({ label, value, tone }: { label: string; value: string; tone?: 'pine' }) {
   return (
-    <div className="hidden items-baseline gap-1.5 rounded-full border border-[var(--line)] bg-white/70 px-3 py-1 xl:flex">
-      <dt className="text-[var(--muted)]">{label}</dt>
-      <dd className={`font-semibold tabular-nums ${tone === 'pine' ? 'text-[var(--pine)]' : ''}`}>{value}</dd>
+    <div className="hidden items-baseline gap-1.5 rounded-full border border-white/12 bg-white/5 px-3 py-1 xl:flex">
+      <dt className="text-white/50">{label}</dt>
+      <dd className={`font-semibold tabular-nums ${tone === 'pine' ? 'text-emerald-300' : 'text-white'}`}>{value}</dd>
     </div>
   );
 }

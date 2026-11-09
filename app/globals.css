@@ -2,6 +2,8 @@
 @import './fx.css';
 
 :root {
+  --frame: #05130b;
+  --palette-accent: #c08a1e;
   --cream: #fbf7ef;
   --ink: #17301f;
   --muted: #5d6b60;
