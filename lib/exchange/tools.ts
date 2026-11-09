@@ -130,7 +130,9 @@ async function searchGifts(args: Args, { get, set, shop }: ToolContext): Promise
   if (typeof slot !== 'string') return slot;
   const query = String(args.query ?? '').trim();
   if (!query) return refuse('Say what to search for.');
-  const products = await shop.search(query, exchange.budget);
+  // The shops can find nothing for something narrow ("loose leaf tea") and plenty when it's asked as a gift.
+  const found = await shop.search(query, exchange.budget);
+  const products = found.length > 0 ? found : await shop.search(`gift for someone who loves ${query}`, exchange.budget);
   set(addCandidates(get(), slot, products));
   return json({ query, underBudget: money(exchange.budget), products: products.slice(0, 8).map(forModel) }, `"${query}": ${products.length} in stock under ${money(exchange.budget)}`);
 }
@@ -178,7 +180,7 @@ function proposeIdeas(args: Args, { get, set }: ToolContext): Outcome {
   const ideas: Idea[] = [];
   for (const { productId, reason } of given) {
     const product = candidates.find((candidate) => candidate.id === productId);
-    if (!product) return refuse(`Product ${productId} didn't come from a search for this slot. Only propose what the tools found.`);
+    if (!product) return { reply: `Product ${productId} didn't come from a search for this slot. Only propose what the tools found, or search again for this slot.`, failed: true, quiet: true };
     if (product.price > exchange.budget) return refuse(`${product.title} is ${money(product.price)}, over the ${money(exchange.budget)} budget.`);
     ideas.push({ product, reason: String(reason ?? '').slice(0, 160) });
   }
@@ -400,7 +402,7 @@ How the exchange goes: everyone places a budget hold on PayPal; you draw names; 
 To run the exchange:
 1. Call checkExchange. If holds are missing, say who you're waiting for and stop.
 2. Call drawNames.
-3. For every slot, in one go, make one to three shopping calls: searchGifts with one product type per search, plus checkWishlist or searchByPhoto when the profile mentions them. Stick to what they like, and stay away from what they said to avoid.
+3. For every slot, in one go, make one to three shopping calls: searchGifts with one product type per search, plus checkWishlist or searchByPhoto when the profile mentions them. Stick to what they like, and stay away from what they said to avoid. Every slot needs ideas: if a slot's searches found nothing, search again for that slot with something broader before you move on.
 4. Call proposeIdeas for every slot, with 3 ideas that really fit. Prefer well-rated products, and don't propose three of the same thing.
 5. For slots whose decider is "tinsel", call pickGift. Don't wait to be asked: those givers already said yes. Don't buy yet: until the gifts are bought, someone can still drop out.
 6. For slots whose decider is "giver", stop and tell the owner their ideas are ready.

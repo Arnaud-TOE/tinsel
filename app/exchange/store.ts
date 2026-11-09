@@ -6,7 +6,7 @@ import type { HoldReceipt } from '@/lib/paypal';
 import { withRetries } from '@/lib/retry';
 import { welcomeBack } from '@/lib/exchange/welcome';
 import { demoExchange } from '@/lib/exchange/demo';
-import { runScripted } from '@/lib/exchange/scripted';
+import { afterFinishing, finishRun, isUnfinished, runScripted } from '@/lib/exchange/scripted';
 import { activePeople, deciderOf, slotList, slotOfGiver, stageOf, totals } from '@/lib/exchange/state';
 import { TOOLS, type Outcome, type Shop, type ToolContext } from '@/lib/exchange/tools';
 import type { Exchange, Hold, Person, Product } from '@/lib/exchange/types';
@@ -365,6 +365,7 @@ export class ExchangeStore {
     this.busy = true;
     this.pushFeed({ kind: 'you', text: prompt });
     this.messages = [...this.messages, { role: 'user', content: prompt }];
+    let buying = prompt.trim().toLowerCase() === 'buy the gifts';
     try {
       for (let turn = 0; turn < MAX_TURNS; turn++) {
         const answer = await post<{ id?: string; choices?: { message?: ModelMessage }[] }>('/api/ai', { messages: this.messages });
@@ -372,11 +373,14 @@ export class ExchangeStore {
         if (!message) throw new Error('The assistant had nothing to say.');
         if (answer.id === 'tinsel-notice') this.modelDown = true;
         else this.messages = [...this.messages, { role: 'assistant', content: message.content ?? null, ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}) }];
-        if (message.content) this.pushFeed({ kind: 'tinsel', text: message.content });
-        if (!message.tool_calls?.length) break;
+        const calls = message.tool_calls ?? [];
+        // A closing line from a run that stopped short would be out of date once the run is finished for it.
+        if (message.content && !(calls.length === 0 && !this.modelDown && isUnfinished(this.exchange, buying))) this.pushFeed({ kind: 'tinsel', text: message.content });
+        if (calls.length === 0) break;
+        if (calls.some((call) => call.function.name === 'buyGift')) buying = true;
 
         const results = await Promise.all(
-          message.tool_calls.map(async (call) => {
+          calls.map(async (call) => {
             let args: Record<string, unknown> = {};
             try {
               args = JSON.parse(call.function.arguments || '{}');
@@ -389,6 +393,7 @@ export class ExchangeStore {
         );
         this.messages = [...this.messages, ...results];
       }
+      if (!this.modelDown && isUnfinished(this.exchange, buying)) await this.finishForTheAssistant(buying);
     } catch (cause) {
       this.pushFeed({ kind: 'tinsel', text: `Something went wrong on my side: ${(cause as Error).message}` });
     } finally {
@@ -396,6 +401,14 @@ export class ExchangeStore {
       this.changed();
       this.announceIfDone();
     }
+  }
+
+  private async finishForTheAssistant(buying: boolean) {
+    await finishRun(this.context, (name, run) => this.runToolScripted(name, run), buying);
+    const line = afterFinishing(this.exchange);
+    if (!line) return;
+    this.pushFeed({ kind: 'tinsel', text: line });
+    this.messages = [...this.messages, { role: 'assistant', content: line }];
   }
 
   /** Runs what it can with the same tools and no model. */

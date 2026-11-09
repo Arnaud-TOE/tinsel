@@ -33,14 +33,15 @@ export function bestThree(products: Product[], avoid: string): Product[] {
 
 export type Step = (name: string, run: () => Promise<Outcome> | Outcome) => Promise<Outcome>;
 
-/** Runs every step it can: stops where a person has to choose. */
-export async function runScripted(context: ToolContext, step: Step): Promise<void> {
-  const call = (name: string, args: Record<string, unknown> = {}) => step(name, () => TOOLS[name].run(args, context));
+type Call = (name: string, args?: Record<string, unknown>) => Promise<Outcome>;
+const caller = (context: ToolContext, step: Step): Call => (name, args = {}) => step(name, () => TOOLS[name].run(args, context));
+
+// For someone whose tastes the shops can't match at all: better a good general present than nothing.
+const BROAD_SEARCHES = ['useful everyday gift', 'popular gift'];
+
+/** Finds and proposes ideas for every slot that has none. */
+async function fillIdeas(context: ToolContext, call: Call) {
   const current = (): Exchange => context.get();
-
-  if (stageOf(current()) === 'holds') return;
-  if (!current().draw) await call('drawNames');
-
   await Promise.all(
     slotList(current())
       .filter((slot) => !current().ideas[slot]?.length && !current().bought[slot])
@@ -49,12 +50,19 @@ export async function runScripted(context: ToolContext, step: Step): Promise<voi
         const recipientId = current().draw?.[giver];
         const recipient = current().people.find((person) => person.id === recipientId);
         if (!recipient) return;
+        // A slot the assistant already searched for only needs its ideas written up.
+        const searched = Boolean(current().candidates[slot]?.length);
         // What they shared only counts if it could be read: a broken link must not be quoted back as their wish.
-        const wishlist = recipient.wishlistUrl ? await call('checkWishlist', { slot }) : null;
-        const photo = recipient.photoUrl ? await call('searchByPhoto', { slot }) : null;
+        const wishlist = !searched && recipient.wishlistUrl ? await call('checkWishlist', { slot }) : null;
+        const photo = !searched && recipient.photoUrl ? await call('searchByPhoto', { slot }) : null;
         const wishlistRead = wishlist !== null && !wishlist.failed;
         const photoRead = photo !== null && !photo.failed;
-        for (const liked of searchesFromLikes(recipient.likes)) await call('searchGifts', { slot, query: `gift for someone who loves ${liked.toLowerCase()}` });
+        if (!searched) for (const liked of searchesFromLikes(recipient.likes)) await call('searchGifts', { slot, query: `gift for someone who loves ${liked.toLowerCase()}` });
+        const matched = Boolean(current().candidates[slot]?.length);
+        for (const query of BROAD_SEARCHES) {
+          if (current().candidates[slot]?.length) break;
+          await call('searchGifts', { slot, query });
+        }
         const candidates = current().candidates[slot] ?? [];
         const shared = wishlistRead || photoRead ? candidates[0] : undefined;
         const others = bestThree(candidates.filter((product) => product !== shared), recipient.avoid);
@@ -62,15 +70,58 @@ export async function runScripted(context: ToolContext, step: Step): Promise<voi
         if (found.length === 0) return;
         const liked = searchesFromLikes(recipient.likes).join(' and ').toLowerCase();
         const sharedReason = wishlistRead ? "Close to what's on their wishlist, and under the budget." : 'It looks like the photo they shared.';
-        await call('proposeIdeas', { slot, ideas: found.map((product) => ({ productId: product.id, reason: product === shared ? sharedReason : `Well rated, and it fits a love of ${liked}.` })) });
+        const reason = matched ? `Well rated, and it fits a love of ${liked}.` : 'Well rated, and under the budget.';
+        await call('proposeIdeas', { slot, ideas: found.map((product) => ({ productId: product.id, reason: product === shared ? sharedReason : reason })) });
       }),
   );
+}
 
+/** Chooses for the givers who left it to Tinsel and, with `buy`, buys what is chosen. A purchase that fails moves on to the next idea. */
+async function chooseAndBuy(context: ToolContext, call: Call, buy: boolean) {
+  const current = (): Exchange => context.get();
   for (const slot of slotList(current())) {
-    if (current().bought[slot]) continue;
-    if (deciderOf(current(), slot) === 'tinsel' && !current().picks[slot] && current().ideas[slot]?.length) {
-      await call('pickGift', { slot, productId: current().ideas[slot][0].product.id, why: 'The best rated of the three.' });
+    for (const idea of current().ideas[slot] ?? []) {
+      if (current().bought[slot]) break;
+      if (deciderOf(current(), slot) === 'tinsel' && !current().picks[slot]) await call('pickGift', { slot, productId: idea.product.id, why: 'The best rated of the three.' });
+      if (!buy || !current().picks[slot]) break;
+      await call('buyGift', { slot });
     }
-    if (current().picks[slot]) await call('buyGift', { slot });
   }
+}
+
+/** Runs every step it can: stops where a person has to choose. */
+export async function runScripted(context: ToolContext, step: Step): Promise<void> {
+  const call = caller(context, step);
+  if (stageOf(context.get()) === 'holds') return;
+  if (!context.get().draw) await call('drawNames');
+  await fillIdeas(context, call);
+  await chooseAndBuy(context, call, true);
+}
+
+/** Whether the assistant stopped with its part of the run undone: a slot with no ideas, a choice left to it, or, with `buy`, a gift chosen and not bought. */
+export function isUnfinished(exchange: Exchange, buy: boolean): boolean {
+  if (!exchange.draw || exchange.cancelled) return false;
+  return slotList(exchange).some((slot) => {
+    if (exchange.bought[slot]) return false;
+    if (!exchange.ideas[slot]?.length) return true;
+    if (!exchange.picks[slot]) return deciderOf(exchange, slot) === 'tinsel';
+    return buy;
+  });
+}
+
+/** Does what the assistant left undone, with the same tools. A model can stop early; the exchange shouldn't. */
+export async function finishRun(context: ToolContext, step: Step, buy: boolean): Promise<void> {
+  const call = caller(context, step);
+  await fillIdeas(context, call);
+  await chooseAndBuy(context, call, buy);
+}
+
+/** One plain line once the run has been finished for the assistant. Nothing once every gift is bought: that has its own line. */
+export function afterFinishing(exchange: Exchange): string | null {
+  const open = slotList(exchange).filter((slot) => !exchange.bought[slot]);
+  const empty = open.filter((slot) => !exchange.ideas[slot]?.length).length;
+  if (empty > 0) return `I couldn't find anything in stock under the budget for ${empty === 1 ? 'one giver' : `${empty} givers`}. Ask me to try again.`;
+  const choosing = open.filter((slot) => !exchange.picks[slot]).length;
+  if (choosing > 0) return `The ideas are ready. ${choosing === 1 ? 'One giver is' : `${choosing} givers are`} choosing their own gift, and the rest are chosen and waiting for the buy step.`;
+  return open.length > 0 ? 'The gifts are chosen. Say when to buy them.' : null;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { demoExchange, DEMO_PEOPLE } from '@/lib/exchange/demo';
 import { assignSlots, drawNames, isValidDraw, repairDraw } from '@/lib/exchange/draw';
-import { bestThree, runScripted, searchesFromLikes } from '@/lib/exchange/scripted';
+import { afterFinishing, bestThree, finishRun, isUnfinished, runScripted, searchesFromLikes } from '@/lib/exchange/scripted';
 import { anonymousRecipient, deciderOf, missingHolds, recipientOfSlot, slotList, stageOf, totals } from '@/lib/exchange/state';
 import { TOOL_SCHEMAS, TOOLS, type Shop, type ToolContext } from '@/lib/exchange/tools';
 import type { Exchange, Hold, Product } from '@/lib/exchange/types';
@@ -465,6 +465,78 @@ describe('totals', () => {
     exchange.holds.maya = { ...hold('maya'), status: 'CHARGED', charged: 24.95, released: 5.05 };
     exchange.holds.ben = { ...hold('ben'), status: 'RELEASED' };
     expect(totals(exchange)).toEqual({ held: 180, stillHeld: 120, charged: 24.95, released: 35.05 });
+  });
+});
+
+describe('when the assistant stops early', () => {
+  const step = (_name: string, go: () => unknown) => Promise.resolve(go()) as never;
+  const drawn = async (shop?: Shop) => {
+    const made = contextFor(withHolds(), shop);
+    await run('drawNames', {}, made.context);
+    return made;
+  };
+
+  it('finds ideas for every slot and chooses for those who left it to Tinsel, without buying', async () => {
+    const { context, current } = await drawn();
+    expect(isUnfinished(current(), false)).toBe(true);
+    await finishRun(context, step, false);
+    expect(isUnfinished(current(), false)).toBe(false);
+    expect(stageOf(current())).toBe('picks');
+    expect(Object.keys(current().bought)).toHaveLength(0);
+    expect(afterFinishing(current())).toContain('One giver is choosing');
+  });
+
+  it('buys what is chosen when it was asked to buy', async () => {
+    const { context, current } = await drawn();
+    await finishRun(context, step, true);
+    expect(Object.keys(current().bought)).toHaveLength(5);
+  });
+
+  it('moves on to the next idea when a purchase fails', async () => {
+    const buy = vi.fn(async (_auth: string, productId: string) => {
+      if (buy.mock.calls.length === 1) throw new Error('Sold out.');
+      return { product: product(productId, 25), charged: 25, released: 5, captureId: `capture-${productId}` };
+    });
+    const { context, current } = await drawn(fakeShop({ buy }));
+    await finishRun(context, step, true);
+    expect(Object.keys(current().bought)).toHaveLength(5);
+  });
+
+  it('falls back on a general search when nothing matches their tastes', async () => {
+    const search = vi.fn(async (query: string) => (/useful everyday/.test(query) ? [product('general-1', 20)] : []));
+    const { context, current } = await drawn(fakeShop({ search }));
+    await finishRun(context, step, false);
+    const slot = slotList(current())[0];
+    expect(current().ideas[slot][0].reason).toBe('Well rated, and under the budget.');
+  });
+
+  it('asks a person to try again when the shops have nothing at all', async () => {
+    const { context, current } = await drawn(fakeShop({ search: vi.fn(async () => []), searchByPhoto: vi.fn(async () => []), similar: vi.fn(async () => []) }));
+    await finishRun(context, step, false);
+    expect(afterFinishing(current())).toContain("couldn't find anything");
+  });
+
+  it('has nothing to finish before the names are drawn', () => {
+    expect(isUnfinished(withHolds(), true)).toBe(false);
+  });
+});
+
+describe('searching', () => {
+  it('asks again as a gift when the shops find nothing for something narrow', async () => {
+    const search = vi.fn(async (query: string) => (query.startsWith('gift for') ? [product('found', 20)] : []));
+    const { context, current } = contextFor(withHolds(), fakeShop({ search }));
+    await run('drawNames', {}, context);
+    const slot = slotList(current())[0];
+    await run('searchGifts', { slot, query: 'loose leaf tea' }, context);
+    expect(search).toHaveBeenLastCalledWith('gift for someone who loves loose leaf tea', 30);
+    expect(current().candidates[slot].map((item) => item.id)).toEqual(['found']);
+  });
+
+  it('keeps an idea from another slot between the model and itself', async () => {
+    const { context, current } = contextFor(withHolds());
+    await run('drawNames', {}, context);
+    const outcome = await run('proposeIdeas', { slot: slotList(current())[0], ideas: [{ productId: 'nowhere', reason: 'x' }] }, context);
+    expect(outcome).toMatchObject({ failed: true, quiet: true });
   });
 });
 
